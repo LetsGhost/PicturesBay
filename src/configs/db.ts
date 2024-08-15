@@ -8,8 +8,9 @@ export const connectToDatabase = async () => {
       throw new Error('MONGODB_URI is not defined');
     }
 
-    await mongoose.connect(process.env.MONGODB_URI as string);
-    console.log('Connected to MongoDB successfully');
+    await mongoose.connect(process.env.MONGODB_URI as string).then(() => {
+      console.log('Connected to MongoDB successfully');
+    });
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
   }

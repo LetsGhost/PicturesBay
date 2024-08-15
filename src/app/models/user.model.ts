@@ -7,8 +7,8 @@ class User {
     @prop({required: true})
     public password?: string;
 
-    @prop({required: true})
-    public createdAt: Date = new Date();
+    @prop({required: true, default: Date.now})
+    public createdAt?: Date;
 }
 
 export default User;
