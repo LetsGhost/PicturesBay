@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import env from 'dotenv';
 env.config();
 
-const connectToDatabase = async () => {
+export const connectToDatabase = async () => {
   try {
     if(!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI is not defined');
@@ -14,5 +14,3 @@ const connectToDatabase = async () => {
     console.error('Error connecting to MongoDB:', error);
   }
 };
-
-connectToDatabase();
