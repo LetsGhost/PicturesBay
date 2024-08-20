@@ -14,7 +14,6 @@ passport.use(new LocalStrategy(
       if (!success) {
         return done(null, false, { message: 'Incorrect email.' });
       }
-      console.log('User found:', user);
 
       const isValid = await userService.validatePassword(password, user?.password ?? "");
       if (!isValid.success) {
