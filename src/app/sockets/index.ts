@@ -3,6 +3,15 @@ import { Server } from 'socket.io';
 export const registerSocketEvents = (io: Server) => {
   console.log('Registering socket events');
 
+  io.use((socket, next) => {
+    const req = socket.request as any;
+
+    if(req.isAuthenticated()){
+      return next();
+    }
+    next(new Error('Unauthorized'));
+  });
+
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
