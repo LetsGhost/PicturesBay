@@ -1,14 +1,34 @@
-import { prop } from '@typegoose/typegoose';
+import { prop, pre, getModelForClass } from '@typegoose/typegoose';
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
-class User {
-    @prop({required: true})
-    public email?: string;
+dotenv.config();
 
-    @prop({required: true})
-    public password?: string;
+@pre<User>('save', async function(next) {
+    const user = this as User;
+    if (!user.isModified('password')) {
+      return next();
+    }
+    try {
+      const salt = await bcrypt.genSalt(Number(process.env.SALT_ROUNDS));
+      user.password = await bcrypt.hash(user.password as string, salt);
+      next();
+    } catch (err) {
+      next(err as mongoose.CallbackError);
+    }
+})
 
-    @prop({required: true, default: Date.now})
-    public createdAt?: Date;
+class User extends mongoose.Document {
+  @prop({ required: true })
+  public email?: string;
+
+  @prop({ required: true })
+  public password?: string;
+
+  @prop({ required: true, default: Date.now })
+  public createdAt?: Date;
 }
 
+// Create and export the model
 export default User;
