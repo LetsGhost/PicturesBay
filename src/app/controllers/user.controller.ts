@@ -19,6 +19,7 @@ class UserController {
   }
 
   async loginUser(req: Request, res: Response, next: Function) {
+    // Call the local strategy
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
         return next(err);
