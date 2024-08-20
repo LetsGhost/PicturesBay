@@ -26,6 +26,7 @@ class UserController {
       }
       
       if (!user) {
+        console.log('Invalid email or password');
         return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
@@ -33,6 +34,7 @@ class UserController {
         if (err) {
           return next(err);
         }
+        console.log('Logged in successfully');
         return res.status(200).json({ success: true, message: 'Logged in successfully' });
       });
     })(req, res, next);

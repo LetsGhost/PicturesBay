@@ -1,15 +1,27 @@
 import { Server } from 'socket.io';
+import { Socket } from 'socket.io';
 
-export const registerSocketEvents = (io: Server) => {
+interface socket extends Socket {
+  user?: any
+  // other additional attributes here, example:
+  // surname?: string;
+}
+
+const wrap = (middleware: (req: any, res: any, next: any) => void) => (socket: any, next: any) => middleware(socket.request, {}, next);
+
+export const registerSocketEvents = (io: Server, sessionMiddleware: any, passport: any) => {
   console.log('Registering socket events');
 
-  io.use((socket, next) => {
-    const req = socket.request as any;
+  io.use(wrap(sessionMiddleware));
+  io.use(wrap(passport.initialize()));
+  io.use(wrap(passport.session()));
 
-    if(req.isAuthenticated()){
-      return next();
+  io.use((socket, next) => {
+    if (socket.request.user) {
+      next();
+    } else {
+      next(new Error('unauthorized'));
     }
-    next(new Error('Unauthorized'));
   });
 
   io.on('connection', (socket) => {
@@ -21,6 +33,6 @@ export const registerSocketEvents = (io: Server) => {
     });
 
     // Import and register other events
-    require('./events/userEvents')(socket);
+    //require('./events/userEvents')(socket);
   });
 };
