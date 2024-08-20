@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, NextFunction } from 'express';
 import { createServer } from 'http';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -13,6 +13,7 @@ import {connectToDatabase} from "./configs/db";
 import './configs/passportConfig';
 import { registerSocketEvents } from './app/sockets';
 import { client, connectToRedis } from './configs/redis';
+import sessionMiddleware from './configs/session.config';
 
 // Routes
 import userRouter from './app/routes/user.routes';
@@ -31,11 +32,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Passport
-app.use(session({ 
-  secret: process.env.SECRET_KEY as string, 
-  resave: false, 
-  saveUninitialized: true 
-}));
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -48,6 +45,15 @@ const io = new Server(httpServer, {
     origin: "*",
     methods: ["GET", "POST"]
   }
+});
+
+io.use((socket, next) => {
+  sessionMiddleware(socket.request as Request, {} as any, next as NextFunction);
+});
+
+io.use((socket, next) => {
+  passport.initialize()(socket.request as Request, {} as any, next as NextFunction);
+  passport.session()(socket.request as Request, {} as any, next as NextFunction);
 });
 
 registerSocketEvents(io);
