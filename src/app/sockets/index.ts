@@ -1,12 +1,23 @@
 import { Server } from 'socket.io';
+import passport from 'passport';
 
-import { authSocket } from '../middleware/authSocket.middleware';
-
+import "./events/connection.event";
+import { JoinEvent } from './events/connection.event';
 
 export const registerSocketEvents = (io: Server) => {
-  console.log('Registering socket events');
 
-  io.use(authSocket)
+  io.engine.use(
+    (req: { _query: Record<string, string> }, res: Response, next: Function) => {
+      const isHandshake = req._query.sid === undefined;
+      if (isHandshake) {
+        passport.authenticate("jwt", { session: false })(req, res, next);
+      } else {
+        next();
+      }
+    },
+  );
+
+  console.log('Registering socket events');
 
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
@@ -17,6 +28,6 @@ export const registerSocketEvents = (io: Server) => {
     });
 
     // Import and register other events
-    //require('./events/userEvents')(socket);
+    JoinEvent(socket);
   });
 };
