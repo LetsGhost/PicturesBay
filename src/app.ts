@@ -22,7 +22,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5500",
+    origin: "*",
     credentials: true
   }
 });
@@ -45,7 +45,7 @@ app.use(passport.session());
 // Routes
 app.use("/user", userRouter)
 
-registerSocketEvents(io, sessionMiddleware, passport);
+registerSocketEvents(io);
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
