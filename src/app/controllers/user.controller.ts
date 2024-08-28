@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import passport from 'passport';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import UserService from '../services/user.service';
 
@@ -19,25 +21,30 @@ class UserController {
   }
 
   async loginUser(req: Request, res: Response, next: Function) {
-    // Call the local strategy
-    passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        return next(err);
-      }
-      
-      if (!user) {
-        console.log('Invalid email or password');
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    try{
+      const { email, password } = req.body;
+
+      // Check if User exists
+      const user = await UserService.findUserByEmail(email);
+      if(!user.success){
+        return res.status(user.code).json({success: false, message: user.message});
       }
 
-      req.logIn(user, (err) => {
-        if (err) {
-          return next(err);
-        }
-        console.log('Logged in successfully');
-        return res.status(200).json({ success: true, message: 'Logged in successfully' });
-      });
-    })(req, res, next);
+      // Validate password
+      const validPassword = await UserService.validatePassword(password, user.user?.password!);
+      if(!validPassword){
+        return res.status(401).json({success: false, message: 'Invalid password'});
+      }
+
+      // Create JWT token
+      const token = jwt.sign({id: user.user?._id}, process.env.JWT_SECRET!, {expiresIn: process.env.JWT_EXPIRATION!});
+
+      console.log('User logged in successfully');
+      return res.status(200).json({success: true, token});
+    } catch (error) {
+      console.error('Error logging in user:', error);
+      res.status(500).json({success: false, message: 'Internal server error'});
+    }
   }
 
   async guardedRoute(req: Request, res: Response) {

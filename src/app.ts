@@ -9,10 +9,9 @@ import { Server} from 'socket.io';
 dotenv.config();
 
 import {connectToDatabase} from "./configs/db";
-import './configs/passportConfig';
+import './configs/passport.config';
 import { registerSocketEvents } from './app/sockets';
 import { connectToRedis } from './configs/redis';
-import sessionMiddleware from './configs/session.config';
 
 // Routes
 import userRouter from './app/routes/user.routes';
@@ -29,18 +28,13 @@ const io = new Server(httpServer, {
 
 // Connect to database
 connectToDatabase();
-connectToRedis();
+//connectToRedis();
 
 // Middlewares
 app.use(cors({ origin: "*", credentials: true,  }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Passport
-app.use(sessionMiddleware);
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Routes
 app.use("/user", userRouter)
