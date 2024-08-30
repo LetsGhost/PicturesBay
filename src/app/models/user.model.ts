@@ -23,6 +23,12 @@ class User extends mongoose.Document {
   @prop({ required: true })
   public email?: string;
 
+  @prop({required: true})
+  public username?: string;
+
+  @prop({ required: true })
+  public birthdate?: Date;
+
   @prop({ required: true })
   public password?: string;
 
