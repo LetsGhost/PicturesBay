@@ -22,7 +22,7 @@ class UserController {
 
   async loginUser(req: Request, res: Response, next: Function) {
     try{
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
 
       // Check if User exists
       const user = await UserService.findUserByEmail(email);
@@ -36,8 +36,10 @@ class UserController {
         return res.status(401).json({success: false, message: 'Invalid password'});
       }
 
+      const expiresIn = rememberMe ? process.env.JWT_EXPIRATION_REMEMBER_ME! : process.env.JWT_EXPIRATION!;
+
       // Create JWT token
-      const token = jwt.sign({id: user.user?._id}, process.env.JWT_SECRET!, {expiresIn: process.env.JWT_EXPIRATION!});
+      const token = jwt.sign({id: user.user?._id}, process.env.JWT_SECRET!, {expiresIn});
 
       console.log('User logged in successfully');
       return res.status(200).json({success: true, token});
