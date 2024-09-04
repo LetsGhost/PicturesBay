@@ -1,7 +1,7 @@
-import { prop, pre, getModelForClass } from '@typegoose/typegoose';
+import { prop, pre } from '@typegoose/typegoose';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 dotenv.config();
 
@@ -19,21 +19,31 @@ dotenv.config();
     }
 })
 
-class User extends mongoose.Document {
+class User extends Document {
+
+  constructor(email: string, username: string, birthdate: Date, password: string, createdAt: Date) {
+    super();
+    this.email = email;
+    this.username = username;
+    this.birthdate = birthdate;
+    this.password = password;
+    this.createdAt = createdAt;
+  }
+
   @prop({ required: true })
-  public email?: string;
+  public email: string;
 
   @prop({required: true})
-  public username?: string;
+  public username: string;
 
   @prop({ required: true })
-  public birthdate?: Date;
+  public birthdate: Date;
 
   @prop({ required: true })
-  public password?: string;
+  public password: string;
 
   @prop({ required: true, default: Date.now })
-  public createdAt?: Date;
+  public createdAt: Date;
 }
 
 // Create and export the model
