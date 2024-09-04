@@ -8,10 +8,12 @@
       "forceConsistentCasingInFileNames": true,
       "outDir": "./dist",
       "experimentalDecorators": true,
-      "emitDecoratorMetadata": true
+      "emitDecoratorMetadata": true,
+      "types": ["jest"],
     },
     "include": [
       "src/**/*.ts",
-      "src/types/**/*.d.ts"
+      "src/types/**/*.d.ts",
+      "tests/**/*.ts"
     ]
   }
