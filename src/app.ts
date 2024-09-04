@@ -17,7 +17,7 @@ import { connectToRedis } from './configs/redis';
 import userRouter from './app/routes/user.routes';
 
 // Create Express server
-const app = express();
+export const app = express(); // Export for tests
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
