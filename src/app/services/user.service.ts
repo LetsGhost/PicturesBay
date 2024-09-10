@@ -28,7 +28,7 @@ class UserService {
 
       // Check if user already exists
       const userExists = await this.findUserByEmail(userData.email);
-      if(!userExists.success){
+      if(userExists.success){
         return {
           success: false,
           code: 409,
