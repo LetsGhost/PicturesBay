@@ -29,6 +29,26 @@ class PaintingService{
                 }
             }
 
+            // Create painting
+            // Levels array
+            const levels = ['common', 'rare', 'epic', 'legendary'];
+            const number = 10;
+
+            // Loop through levels and create paintings
+            for (const level of levels) {
+                const newPainting = new PaintingModel({
+                    ...paintingData,
+                    level,
+                    number
+                });
+                await newPainting.save();
+            }
+
+            return {
+                success: true,
+                code: 201,
+                message: 'Paintings created successfully',
+            };
         } catch(err){
             logger.error('Error creating painting:', err, {service: 'PaintingService.createPainting'});
             return {
