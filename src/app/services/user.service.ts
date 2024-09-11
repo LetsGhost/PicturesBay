@@ -37,8 +37,7 @@ class UserService {
         }
       }
       
-      const user = getModelForClass(User);
-      user.create(userData);
+      UserModel.create(userData);
 
       return {
         success: true,
