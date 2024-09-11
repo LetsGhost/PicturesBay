@@ -1,5 +1,6 @@
 import { getModelForClass } from "@typegoose/typegoose";
 import bcrypt from "bcrypt";
+import logger from "../../configs/winston.config";
 
 import User from "../models/user.model";
 
@@ -44,7 +45,7 @@ class UserService {
         code: 201,
       }
     } catch (error) {
-      console.error('Error creating user:', error);
+      logger.error('Error creating user:', error, { service: "UserService.createUser"});
       return {
         success: false,
         code: 500,
@@ -64,7 +65,6 @@ class UserService {
         };
       }
 
-
       const userFound = await UserModel.findOne({email: email}).exec();
 
       if(!userFound){
@@ -81,7 +81,7 @@ class UserService {
         user: userFound,
       }
     } catch (error) {
-      console.error('Error finding user by email:', error);
+      logger.error('Error finding user by email:', error, { service: "UserService.findUserByEmail"});
       return {
         success: false,
         code: 500,
@@ -119,7 +119,7 @@ class UserService {
         user: userFound,
       }
     } catch (error) {
-      console.error('Error finding user by id:', error);
+      logger.error('Error finding user by id:', error, { service: "UserService.findUserById"});
       return {
         success: false,
         code: 500,
@@ -144,7 +144,7 @@ class UserService {
         code: 200,
       }
     } catch (error) {
-      console.error('Error validating password:', error);
+      logger.error('Error validating password:', error, { service: "UserService.validatePassword"});
       return {
         success: false,
         code: 500,

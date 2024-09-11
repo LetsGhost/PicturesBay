@@ -1,23 +1,29 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import logger from "../../configs/winston.config";
 dotenv.config();
 
 import UserService from '../services/user.service';
 
 class UserController {
   async createUser(req: Request, res: Response) {
-    const userData = req.body;
+    try{
+      const userData = req.body;
 
-    const {success, code, message} = await UserService.createUser(userData)
+      const {success, code, message} = await UserService.createUser(userData)
 
-    if(success){
-      console.log('User created successfully');
-    } else {
-      console.error('Error creating user:', message);
+      if(success){
+        logger.info('User created successfully', { service: "UserController.createUser"});
+      } else {
+        logger.error('Error creating user:', message, { service: "UserController.createUser"});
+      }
+
+      return res.status(code).json({success, message});
+    } catch (error) {
+      logger.error('Error creating user:', error, { service: "UserController.createUser"});
+      res.status(500).json({success: false, message: 'Internal server error'});
     }
-
-    return res.status(code).json({success, message});
   }
 
   async loginUser(req: Request, res: Response, next: Function) {
@@ -41,10 +47,11 @@ class UserController {
       // Create JWT token
       const token = jwt.sign({id: user.user?._id}, process.env.JWT_SECRET!, {expiresIn});
 
-      console.log('User logged in successfully');
+      logger.info('User logged in successfully', { service: "UserController.loginUser"});
+
       return res.status(200).json({success: true, token});
     } catch (error) {
-      console.error('Error logging in user:', error);
+      logger.error('Error logging in user:', error, { service: "UserController.loginUser"});
       res.status(500).json({success: false, message: 'Internal server error'});
     }
   }
