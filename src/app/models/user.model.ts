@@ -21,12 +21,13 @@ dotenv.config();
 
 class User extends Document {
 
-  constructor(email: string, username: string, birthdate: Date, password: string, createdAt: Date) {
+  constructor(email: string, username: string, birthdate: Date, password: string, createdAt: Date, privacyPolicy: boolean) {
     super();
     this.email = email;
     this.username = username;
     this.birthdate = birthdate;
     this.password = password;
+    this.privacyPolicy = privacyPolicy;
     this.createdAt = createdAt;
   }
 
@@ -41,6 +42,9 @@ class User extends Document {
 
   @prop({ required: true })
   public password: string;
+
+  @prop ({ required: true })
+  public privacyPolicy: boolean;
 
   @prop({ required: true, default: Date.now })
   public createdAt: Date;
