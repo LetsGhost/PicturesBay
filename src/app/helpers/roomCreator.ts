@@ -126,8 +126,20 @@ class RoomCreator {
   }
 
   getRooms() {
-    return Array.from(this.rooms.keys());
-  }
+    const roomsList = Array.from(this.rooms.keys());
+    this.io.sockets.sockets.forEach(socket => {
+        let isInRoom = false;
+        this.rooms.forEach(room => {
+            if (room.users.has(socket.id)) {
+                isInRoom = true;
+            }
+        });
+        if (!isInRoom) {
+            socket.emit("roomsList", roomsList);
+        }
+    });
+    return roomsList;
+}
 }
 
 export default RoomCreator;
