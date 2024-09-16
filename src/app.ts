@@ -12,7 +12,7 @@ import {connectToDatabase} from "./configs/db";
 import './configs/passport.config';
 import { registerSocketEvents } from './app/sockets';
 import { connectToRedis } from './configs/redis';
-import roomCreator from './app/helpers/roomCreator';
+import RoomCreator from './app/helpers/roomCreator';
 
 // Routes
 import userRouter from './app/routes/user.routes';
@@ -41,6 +41,8 @@ app.use(cookieParser());
 app.use("/user", userRouter)
 
 registerSocketEvents(io);
+
+const roomCreator = new RoomCreator(io);
 
 // Create multiple rooms on server start
 const roomsToCreate = ['room1', 'room2', 'room3'];
