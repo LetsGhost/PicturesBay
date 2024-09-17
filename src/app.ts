@@ -45,7 +45,7 @@ registerSocketEvents(io);
 const roomCreator = new RoomCreator(io);
 
 // Create multiple rooms on server start
-const roomsToCreate = ['room1', 'room2', 'room3'];
+const roomsToCreate = ['room1', 'room2', 'room3', "room4", "room5", "room6", "room7", "room8", "room9", "room10"];
 roomsToCreate.forEach(room => roomCreator.createRoom(room));
 
 const PORT = process.env.PORT || 3000;

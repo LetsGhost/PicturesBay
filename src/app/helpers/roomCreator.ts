@@ -1,4 +1,3 @@
-// src/helpers/roomCreator.ts
 import { Server, Socket } from 'socket.io';
 
 interface Room {
@@ -7,6 +6,7 @@ interface Room {
   interval: NodeJS.Timeout;
   users: Set<string>;
   oneMinuteInterval: NodeJS.Timeout;
+  creationTime: number;
 }
 
 class RoomCreator {
@@ -25,7 +25,12 @@ class RoomCreator {
       socket.on('leaveRoom', (roomName: string) => {
         this.leaveRoom(socket, roomName);
       });
+
+      // Emit room list when a client connects
+      socket.emit('roomsList', this.getRooms());
     });
+
+    this.startRoomTimer(); // Ensure the timer starts when the instance is created
   }
 
   createRoom(name: string, duration: number = 5 * 60 * 1000) {
@@ -55,7 +60,7 @@ class RoomCreator {
     // Initialize oneInterval with a dummy timeout
     const oneMinuteInterval = setTimeout(() => {}, 0);
 
-    this.rooms.set(name, { name, timer, interval, users, oneMinuteInterval });
+    this.rooms.set(name, { name, timer, interval, users, oneMinuteInterval, creationTime: Date.now() });
     console.log(`Room ${name} created with a ${duration / 1000 / 60} minute timer.`);
 
     // Start the 1-minute timer logic
@@ -125,21 +130,48 @@ class RoomCreator {
     }
   }
 
+  // Method to calculate remaining time for each room
+  calculateRemainingTime(roomName: string): number {
+    const room = this.rooms.get(roomName);
+    if (room) {
+      const currentTime = Date.now();
+      const elapsedTime = (currentTime - room.creationTime) / 1000; // in seconds
+      const remainingTime = Math.max(0, 300 - elapsedTime); // 300 seconds = 5 minutes
+      return remainingTime;
+    }
+    return 0;
+  }
+
   getRooms() {
-    const roomsList = Array.from(this.rooms.keys());
-    this.io.sockets.sockets.forEach(socket => {
-        let isInRoom = false;
-        this.rooms.forEach(room => {
-            if (room.users.has(socket.id)) {
-                isInRoom = true;
-            }
-        });
-        if (!isInRoom) {
-            socket.emit("roomsList", roomsList);
-        }
-    });
+    const roomsList = Array.from(this.rooms.entries()).map(([roomName, room]) => ({
+      roomName,
+      users: Array.from(room.users),
+      remainingTime: this.calculateRemainingTime(roomName)
+    }));
+    
     return roomsList;
-}
+  }
+
+  emitRoomsList() {
+    const roomsList = this.getRooms();
+    this.io.sockets.sockets.forEach(socket => {
+      let isInRoom = false;
+      this.rooms.forEach(room => {
+        if (room.users.has(socket.id)) {
+          isInRoom = true;
+        }
+      });
+      if (!isInRoom) {
+        socket.emit("roomsList", roomsList);
+      }
+    });
+  }
+
+  startRoomTimer() {
+    setInterval(() => {
+      this.emitRoomsList();
+    }, 1000); // Emit every second
+  }
 }
 
 export default RoomCreator;

@@ -13,6 +13,4 @@ export const RoomEvent = (socket: Socket) => {
     console.log(`User ${socket.id} left room ${room}`);
     socket.emit("leftRoom", `You left room ${room}`);
   });
-
-  
 };
