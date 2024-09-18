@@ -33,13 +33,17 @@ class PaintingService{
             // Levels array
             const levels = ['common', 'rare', 'epic', 'legendary'];
             const number = 10;
+            
+            // Generating the condition randomly 
+            //const condition = Math.floor(Math.random() * 100) + 1;
 
             // Loop through levels and create paintings
             for (const level of levels) {
                 const newPainting = new PaintingModel({
                     ...paintingData,
                     level,
-                    number
+                    number,
+                    condition: 100
                 });
                 await newPainting.save();
             }

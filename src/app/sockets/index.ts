@@ -3,6 +3,7 @@ import passport from 'passport';
 
 import "./events/connection.event";
 import { JoinEvent } from './events/connection.event';
+import { RoomEvent } from './events/room.event';
 
 export const registerSocketEvents = (io: Server) => {
 
@@ -29,5 +30,6 @@ export const registerSocketEvents = (io: Server) => {
 
     // Import and register other events
     JoinEvent(socket);
+    RoomEvent(socket);
   });
 };
