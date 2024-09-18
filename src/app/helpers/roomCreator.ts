@@ -1,13 +1,7 @@
 import { Server, Socket } from 'socket.io';
-
-interface Room {
-  name: string;
-  timer: NodeJS.Timeout;
-  interval: NodeJS.Timeout;
-  users: Set<string>;
-  oneMinuteInterval: NodeJS.Timeout;
-  creationTime: number;
-}
+import { Room } from '../types/Room.types';
+import { Painting } from '../types/Painting.types';
+import paintingService from '../services/painting.service';
 
 class RoomCreator {
   private io: Server;
@@ -39,6 +33,9 @@ class RoomCreator {
       return;
     }
 
+    // Query Paintings before creating a room
+    const queryPaintings = paintingService.getPaintingWithLevel("common")
+
     const users = new Set<string>();
     let remainingTime = duration;
 
@@ -53,6 +50,7 @@ class RoomCreator {
       clearInterval(interval);
       clearInterval(oneMinuteInterval);
       this.disconnectUsersFromRoom(name);
+      this.io.to(name).emit("leaveRoom", { leaveRoom: true}) // Emit an event to leave the room
       this.rooms.delete(name);
       this.createRoom(name, duration); // Create a new room after the current one ends
     }, duration);
@@ -142,6 +140,7 @@ class RoomCreator {
     return 0;
   }
 
+  // Method to get a list of rooms with their users and remaining time
   getRooms() {
     const roomsList = Array.from(this.rooms.entries()).map(([roomName, room]) => ({
       roomName,
@@ -152,6 +151,7 @@ class RoomCreator {
     return roomsList;
   }
 
+  // Emit the list of rooms to all clients that are not in a room
   emitRoomsList() {
     const roomsList = this.getRooms();
     this.io.sockets.sockets.forEach(socket => {
@@ -167,6 +167,7 @@ class RoomCreator {
     });
   }
 
+  // Method to start a timer that emits the list of rooms every second
   startRoomTimer() {
     setInterval(() => {
       this.emitRoomsList();

@@ -124,8 +124,11 @@ class PaintingService{
                 };
             }
     
-            // Get paintings by level with a limit of 5
-            const paintings = await PaintingModel.find({level}).limit(5);
+            // Get 5 random paintings by level
+            const paintings = await PaintingModel.aggregate([
+                { $match: { level } },
+                { $sample: { size: 5 } }
+            ]);
             if (!paintings || paintings.length === 0) {
                 logger.error('Paintings not found', {service: 'PaintingService.getPaintingWithLevel'});
                 return {

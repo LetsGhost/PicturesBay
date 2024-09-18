@@ -29,7 +29,7 @@ const io = new Server(httpServer, {
 
 // Connect to database
 connectToDatabase();
-//connectToRedis();
+connectToRedis();
 
 // Middlewares
 app.use(cors({ origin: "*", credentials: true,  }));
