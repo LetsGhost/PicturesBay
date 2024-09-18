@@ -58,6 +58,93 @@ class PaintingService{
             }
         }
     }
+
+    async getPaintingById(paintingId: string){
+        try{
+            // Ensure paintingId is defined
+            if(!paintingId){
+                logger.error('Painting ID is required', {service: 'PaintingService.getPaintingById'});
+                return {
+                    success: false,
+                    code: 400,
+                    message: 'Painting ID is required'
+                }
+            }
+
+            // Check if painting exists
+            const painting = await PaintingModel.findById(paintingId);
+            if(!painting){
+                logger.error('Painting not found', {service: 'PaintingService.getPaintingById'});
+                return {
+                    success: false,
+                    code: 404,
+                    message: 'Painting not found'
+                }
+            }
+
+            return {
+                success: true,
+                code: 200,
+                painting: painting
+            };
+        } catch(err){
+            logger.error('Error getting painting by id:', err, {service: 'PaintingService.getPaintingById'});
+            return {
+                success: false,
+                code: 500,
+                message: 'Internal server error'
+            }
+        }
+    }
+
+    async getPaintingWithLevel(level: string) {
+        try {    
+            // Ensure level is defined
+            if (!level) {
+                logger.error('Level is required', {service: 'PaintingService.getPaintingWithLevel'});
+                return {
+                    success: false,
+                    code: 400,
+                    message: 'Level is required'
+                };
+            }
+    
+            // Check if level is valid
+            const levels = ['common', 'rare', 'epic', 'legendary'];
+            if (!levels.includes(level)) {
+                logger.error('Invalid level', {service: 'PaintingService.getPaintingWithLevel'});
+                return {
+                    success: false,
+                    code: 400,
+                    message: 'Invalid level'
+                };
+            }
+    
+            // Get paintings by level with a limit of 5
+            const paintings = await PaintingModel.find({level}).limit(5);
+            if (!paintings || paintings.length === 0) {
+                logger.error('Paintings not found', {service: 'PaintingService.getPaintingWithLevel'});
+                return {
+                    success: false,
+                    code: 404,
+                    message: 'Paintings not found'
+                };
+            }
+    
+            return {
+                success: true,
+                code: 200,
+                paintings: paintings
+            };
+        } catch (err) {
+            logger.error('Error getting painting by level:', err, {service: 'PaintingService.getPaintingWithLevel'});
+            return {
+                success: false,
+                code: 500,
+                message: 'Internal server error'
+            };
+        }
+    }
 }
 
 export default new PaintingService();
