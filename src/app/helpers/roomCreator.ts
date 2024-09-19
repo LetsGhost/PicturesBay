@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
-import { Room } from '../types/Room.types';
-import { Painting } from '../types/Painting.types';
+import { PaintingBet, Room } from '../types/Room.types';
+import { PaintingInterface } from '../types/Painting.types';
 import paintingService from '../services/painting.service';
 
 class RoomCreator {
@@ -27,17 +27,30 @@ class RoomCreator {
     this.startRoomTimer(); // Ensure the timer starts when the instance is created
   }
 
-  createRoom(name: string, duration: number = 5 * 60 * 1000) {
+  async createRoom(name: string, duration: number = 5 * 60 * 1000) {
     if (this.rooms.has(name)) {
       console.log(`Room ${name} already exists.`);
       return;
     }
 
     // Query Paintings before creating a room
-    const queryPaintings = paintingService.getPaintingWithLevel("common")
-    if(!queryPaintings){
+    const queryPaintings = await paintingService.getPaintingWithLevel("common")
+    if(!queryPaintings.success){
       console.log("No paintings found")
+      return
     }
+
+    const paintingBetsInit = queryPaintings?.paintings?.map((painting: PaintingInterface) => ({
+      paintingId: String(painting._id),
+      paintingName: painting.name,
+      lastBet: 0,
+      currentBet: 0,
+      currentBetUser: "",
+      winner: {
+        userId: "",
+        username: ""
+      }
+    }));
 
     const users = new Set<string>();
     let remainingTime = duration;
@@ -61,11 +74,42 @@ class RoomCreator {
     // Initialize oneInterval with a dummy timeout
     const oneMinuteInterval = setTimeout(() => {}, 0);
 
-    this.rooms.set(name, { name, timer, interval, users, oneMinuteInterval, creationTime: Date.now() });
+    this.rooms.set(name, { 
+      name, 
+      timer, 
+      interval, 
+      users, 
+      oneMinuteInterval, 
+      creationTime: Date.now(), 
+      paintings: queryPaintings.paintings ?? [], 
+      paintingBets: paintingBetsInit ?? []
+    });
     console.log(`Room ${name} created with a ${duration / 1000 / 60} minute timer.`);
 
     // Start the 1-minute timer logic
     this.startOneMinuteTimer(name);
+  }
+
+  getPaintings(roomName: string) {
+    const room = this.rooms.get(roomName);
+    if (room) {
+      return room.paintings;
+    }
+    return [];
+  }
+
+  bet(roomName: string, paintingId: string, betAmount: number, userId: string, username: string) {
+    const room = this.rooms.get(roomName);
+    if (room) {
+      const paintingBet = room.paintingBets.find(p => p.paintingId === paintingId);
+      if (paintingBet) {
+        if (betAmount > paintingBet.currentBet) {
+          paintingBet.currentBet = betAmount;
+          paintingBet.currentBetUser = userId;
+          this.io.to(roomName).emit("paintingBetUpdate", paintingBet);
+        }
+      }
+    }
   }
 
   startOneMinuteTimer(roomName: string) {
@@ -76,10 +120,14 @@ class RoomCreator {
       remainingOneMinuteTime -= 1000;
       this.io.to(roomName).emit("oneMinuteTimerUpdate", `1-minute timer remaining time for room ${roomName}: ${remainingOneMinuteTime / 1000} seconds`);
 
+      // Logic when one minute starts
+
       if (remainingOneMinuteTime <= 0) {
         remainingOneMinuteTime = oneMinute;
         this.io.to(roomName).emit("oneMinuteTimerEnd", `1-minute timer ended for room ${roomName}`);
-        // Add your custom logic here for what should happen every minute
+        
+        // Logic when a painting bet round ended
+
       }
     }, 1000);
 
@@ -100,6 +148,7 @@ class RoomCreator {
     room.users.add(socket.id);
     socket.join(roomName);
     this.io.to(roomName).emit("userUpdate", Array.from(room.users));
+    this.io.to(roomName).emit("paintings", room.paintings);
     console.log(`User ${socket.id} joined room ${roomName}`);
   }
 
@@ -168,6 +217,10 @@ class RoomCreator {
         socket.emit("roomsList", roomsList);
       }
     });
+  }
+
+  getRoom(roomName: string) {
+    this.io.to(roomName).emit("room", this.rooms.get(roomName));
   }
 
   // Method to start a timer that emits the list of rooms every second
