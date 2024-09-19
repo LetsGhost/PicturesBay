@@ -35,6 +35,9 @@ class RoomCreator {
 
     // Query Paintings before creating a room
     const queryPaintings = paintingService.getPaintingWithLevel("common")
+    if(!queryPaintings){
+      console.log("No paintings found")
+    }
 
     const users = new Set<string>();
     let remainingTime = duration;
