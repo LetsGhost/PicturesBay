@@ -22,4 +22,5 @@ export interface Room{
   creationTime: number;
   paintings: PaintingInterface[];
   paintingBets: PaintingBet[];
+  currentPainting: PaintingInterface;
 }

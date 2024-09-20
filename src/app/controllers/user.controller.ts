@@ -45,7 +45,7 @@ class UserController {
       const expiresIn = rememberMe ? process.env.JWT_EXPIRATION_REMEMBER_ME! : process.env.JWT_EXPIRATION!;
 
       // Create JWT token
-      const token = jwt.sign({id: user.user?._id}, process.env.JWT_SECRET!, {expiresIn});
+      const token = jwt.sign({id: user.user?._id, username: user.user?.username}, process.env.JWT_SECRET!, {expiresIn});
 
       logger.info('User logged in successfully', { service: "UserController.loginUser"});
 

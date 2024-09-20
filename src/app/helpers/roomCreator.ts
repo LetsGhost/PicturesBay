@@ -16,6 +16,10 @@ class RoomCreator {
         this.joinRoom(socket, roomName);
       });
 
+      socket.on("bet", (roomName: string, paintingId: string, betAmount: number, userId: string, username: string) => {
+        this.bet(roomName, paintingId, betAmount, userId, username);
+      });
+
       socket.on('leaveRoom', (roomName: string) => {
         this.leaveRoom(socket, roomName);
       });
@@ -81,7 +85,8 @@ class RoomCreator {
       oneMinuteStartTime: 0, 
       creationTime: Date.now(), 
       paintings: queryPaintings.paintings ?? [], 
-      paintingBets: paintingBetsInit ?? []
+      paintingBets: paintingBetsInit ?? [],
+      currentPainting: queryPaintings.paintings?.[0] ?? {}
     });
     console.log(`Room ${name} created with a ${duration / 1000 / 60} minute timer.`);
 
@@ -106,7 +111,7 @@ class RoomCreator {
       if (paintingBet) {
         if (betAmount > paintingBet.currentBet) {
           paintingBet.currentBet = betAmount;
-          paintingBet.currentBetUser = userId;
+          paintingBet.currentBetUser = username;
           this.io.to(roomName).emit("paintingBetUpdate", paintingBet);
         }
       }
@@ -120,15 +125,13 @@ class RoomCreator {
 
     const oneMinuteInterval = setInterval(() => {
       remainingOneMinuteTime -= 1000;
-      this.io.to(roomName).emit("oneMinuteTimerUpdate", `1-minute timer remaining time for room ${roomName}: ${remainingOneMinuteTime / 1000} seconds`);
-
-      // Logic when one minute starts
 
       if (remainingOneMinuteTime <= 0) {
         remainingOneMinuteTime = oneMinute;
         
         // Logic when a painting bet round ended
-
+        this.roundEnd(roomName);
+        this.io.to(roomName).emit("oneMinuteTimerEnd", true);
       }
     }, 1000);
 
@@ -137,6 +140,39 @@ class RoomCreator {
     if (room) {
       room.oneMinuteInterval = oneMinuteInterval;
       room.oneMinuteStartTime = oneMinuteStartTime;
+    }
+  }
+
+  roundEnd(roomName: string){
+    const room = this.rooms.get(roomName);
+    if (room) {
+      // Logic when a painting bet round ended
+      const paintingBets = room.paintingBets;
+      const currentPainting = room.currentPainting;
+
+      // Find the winner of the painting bet
+      const winnerPaintingBet = paintingBets.reduce((prev, current) => (prev.currentBet > current.currentBet) ? prev : current);
+      const winnerPaintingBetIndex = paintingBets.findIndex(p => p.paintingId === winnerPaintingBet.paintingId);
+
+      // Update the winner of the painting bet
+      paintingBets[winnerPaintingBetIndex].winner = {
+        userId: winnerPaintingBet.currentBetUser,
+        username: winnerPaintingBet.currentBetUser
+      }
+
+      // Update the current painting
+      const nextPaintingIndex = room.paintings.findIndex(p => p._id === currentPainting._id) + 1;
+      room.currentPainting = room.paintings[nextPaintingIndex] ?? room.paintings[0];
+
+      // Emit the Winner of the painting bet
+      this.io.to(roomName).emit("paintingBetWinner", paintingBets[winnerPaintingBetIndex]);
+
+      // Wait 10 secs before a new round starts
+      setTimeout(() => {
+        // Emit the paintingBets and currentPainting to the room
+        this.io.to(roomName).emit("paintingBets", paintingBets);
+        this.io.to(roomName).emit("painting", room.currentPainting);
+      }, 10000);
     }
   }
 
@@ -162,8 +198,8 @@ class RoomCreator {
       users: Array.from(room.users),
       remainingTime: this.calculateRemainingTime(roomName),
       oneMinuteTimer: remainingOneMinuteTime / 1000,
-      paintings: room.paintings,
-      paintingBets: room.paintingBets
+      paintingBets: room.paintingBets,
+      painting: room.currentPainting,
     });
     console.log(`User ${socket.id} joined room ${roomName}`);
   }
