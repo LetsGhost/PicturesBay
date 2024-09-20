@@ -4,7 +4,6 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import passport from 'passport';
 import { Server} from 'socket.io';
 dotenv.config();
 
@@ -15,7 +14,8 @@ import { connectToRedis } from './configs/redis';
 import RoomCreator from './app/helpers/roomCreator';
 
 // Routes
-import userRouter from './app/routes/user.routes';
+import UserRouter from './app/routes/user.routes';
+import AdminRouter from './app/routes/admin.routes';
 
 // Create Express server
 export const app = express(); // Export for tests
@@ -38,7 +38,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
-app.use("/user", userRouter)
+app.use("/user", UserRouter)
+app.use("/admin", AdminRouter)
 
 registerSocketEvents(io);
 
