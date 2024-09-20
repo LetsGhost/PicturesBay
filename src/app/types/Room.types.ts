@@ -18,6 +18,7 @@ export interface Room{
   interval: NodeJS.Timeout;
   users: Set<string>;
   oneMinuteInterval: NodeJS.Timeout;
+  oneMinuteStartTime: number;
   creationTime: number;
   paintings: PaintingInterface[];
   paintingBets: PaintingBet[];
