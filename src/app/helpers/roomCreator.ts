@@ -3,6 +3,10 @@ import { PaintingBet, Room } from '../types/Room.types';
 import { PaintingInterface } from '../types/Painting.types';
 import paintingService from '../services/painting.service';
 
+const roomTime: number = 6 * 60 * 1000; // 5 minutes in milliseconds
+const paintingTime: number = 60 * 1000; // 1 minute in milliseconds
+const waitingTime: number = 15 * 1000; // 15 seconds in milliseconds
+
 class RoomCreator {
   private io: Server;
   private rooms: Map<string, Room>;
@@ -29,7 +33,7 @@ class RoomCreator {
     });
   }
 
-  async createRoom(name: string, duration: number = 5 * 60 * 1000) {
+  async createRoom(name: string, duration: number = roomTime) {
     if (this.rooms.has(name)) {
       console.log(`Room ${name} already exists.`);
       return;
@@ -119,7 +123,7 @@ class RoomCreator {
   }
 
   startOneMinuteTimer(roomName: string) {
-    const oneMinute = 60 * 1000;
+    const oneMinute = paintingTime;
     let remainingOneMinuteTime = oneMinute;
     const oneMinuteStartTime = Date.now();
 
@@ -172,7 +176,7 @@ class RoomCreator {
         // Emit the paintingBets and currentPainting to the room
         this.io.to(roomName).emit("paintingBets", paintingBets);
         this.io.to(roomName).emit("painting", room.currentPainting);
-      }, 10000);
+      }, waitingTime);
     }
   }
 
