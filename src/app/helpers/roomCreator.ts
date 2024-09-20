@@ -23,8 +23,6 @@ class RoomCreator {
       // Emit room list when a client connects
       socket.emit('roomsList', this.getRooms());
     });
-
-    this.startRoomTimer(); // Ensure the timer starts when the instance is created
   }
 
   async createRoom(name: string, duration: number = 5 * 60 * 1000) {
@@ -79,15 +77,18 @@ class RoomCreator {
       timer, 
       interval, 
       users, 
-      oneMinuteInterval, 
+      oneMinuteInterval,
+      oneMinuteStartTime: 0, 
       creationTime: Date.now(), 
       paintings: queryPaintings.paintings ?? [], 
       paintingBets: paintingBetsInit ?? []
     });
     console.log(`Room ${name} created with a ${duration / 1000 / 60} minute timer.`);
 
+
     // Start the 1-minute timer logic
     this.startOneMinuteTimer(name);
+    this.io.emit('roomsList', this.getRooms());
   }
 
   getPaintings(roomName: string) {
@@ -115,6 +116,7 @@ class RoomCreator {
   startOneMinuteTimer(roomName: string) {
     const oneMinute = 60 * 1000;
     let remainingOneMinuteTime = oneMinute;
+    const oneMinuteStartTime = Date.now();
 
     const oneMinuteInterval = setInterval(() => {
       remainingOneMinuteTime -= 1000;
@@ -124,7 +126,6 @@ class RoomCreator {
 
       if (remainingOneMinuteTime <= 0) {
         remainingOneMinuteTime = oneMinute;
-        this.io.to(roomName).emit("oneMinuteTimerEnd", `1-minute timer ended for room ${roomName}`);
         
         // Logic when a painting bet round ended
 
@@ -135,6 +136,7 @@ class RoomCreator {
     const room = this.rooms.get(roomName);
     if (room) {
       room.oneMinuteInterval = oneMinuteInterval;
+      room.oneMinuteStartTime = oneMinuteStartTime;
     }
   }
 
@@ -149,6 +151,20 @@ class RoomCreator {
     socket.join(roomName);
     this.io.to(roomName).emit("userUpdate", Array.from(room.users));
     this.io.to(roomName).emit("paintings", room.paintings);
+    
+    // Emit the oneMinuteTimerUpdate
+    const elapsedOneMinuteTime = Date.now() - room.oneMinuteStartTime;
+    const remainingOneMinuteTime = Math.max(0, 60 * 1000 - elapsedOneMinuteTime);
+
+    room.oneMinuteStartTime = remainingOneMinuteTime;
+    socket.emit("room", {
+      roomName: room.name,
+      users: Array.from(room.users),
+      remainingTime: this.calculateRemainingTime(roomName),
+      oneMinuteTimer: remainingOneMinuteTime / 1000,
+      paintings: room.paintings,
+      paintingBets: room.paintingBets
+    });
     console.log(`User ${socket.id} joined room ${roomName}`);
   }
 
@@ -203,31 +219,8 @@ class RoomCreator {
     return roomsList;
   }
 
-  // Emit the list of rooms to all clients that are not in a room
-  emitRoomsList() {
-    const roomsList = this.getRooms();
-    this.io.sockets.sockets.forEach(socket => {
-      let isInRoom = false;
-      this.rooms.forEach(room => {
-        if (room.users.has(socket.id)) {
-          isInRoom = true;
-        }
-      });
-      if (!isInRoom) {
-        socket.emit("roomsList", roomsList);
-      }
-    });
-  }
-
   getRoom(roomName: string) {
     this.io.to(roomName).emit("room", this.rooms.get(roomName));
-  }
-
-  // Method to start a timer that emits the list of rooms every second
-  startRoomTimer() {
-    setInterval(() => {
-      this.emitRoomsList();
-    }, 1000); // Emit every second
   }
 }
 
