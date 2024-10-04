@@ -2,7 +2,7 @@ import { prop } from '@typegoose/typegoose';
 import { Document } from 'mongoose';
 
 class Painting extends Document {
-  constructor(name: string, level: string, painting: string, createdAt: Date, number: number, condition: number) {
+  constructor(name: string, level: string, painting: string, createdAt: Date, number: number, condition: number, price: number) {
     super();
     this.name = name;
     this.level = level;
@@ -10,6 +10,7 @@ class Painting extends Document {
     this.number = number;
     this.createdAt = createdAt;
     this.condition = condition
+    this.price = price;
   }
 
   @prop({ required: true })
@@ -26,6 +27,9 @@ class Painting extends Document {
 
   @prop({ required: true })
   public condition: number
+
+  @prop({ required: true})
+  public price: number;
 
   @prop({ required: true, default: Date.now })
   public createdAt: Date;
