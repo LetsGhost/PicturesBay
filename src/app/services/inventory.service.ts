@@ -3,7 +3,7 @@ import { getModelForClass } from "@typegoose/typegoose"
 import Inventory from "../models/inventory.model"
 import User from "../models/user.model"
 import ClaimedPainting from "../models/claimedPainting.model"
-import {client} from "../../configs/redis"
+//import {client} from "../../configs/redis"
 
 const InventoryModel = getModelForClass(Inventory)
 const UserModel = getModelForClass(User)
@@ -64,6 +64,7 @@ class InventoryService {
                 }
             }
 
+            /*
             // Check if the Inventory is already in the Redis cache
             const cacheKey = "inventory:" + userId
             const cachedInventory = await client.get(cacheKey)
@@ -79,6 +80,8 @@ class InventoryService {
                     data: cachedInventory
                 };
             }
+
+            */
 
 
             // Check if the Inventory exists
