@@ -83,7 +83,6 @@ class InventoryService {
 
             */
 
-
             // Check if the Inventory exists
             const user = await UserModel.findOne({userId}) as User
             if(!user?.inventory){
